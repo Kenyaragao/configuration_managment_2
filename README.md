@@ -1,33 +1,37 @@
-# Dependency Visualizer (Variant 27) — Stage 3
+# Dependency Visualizer (Variant 27) — Stage 4
 
-This directory contains the implementation of **Stage 3** of the project.
+This directory contains the implementation of **Stage 4**.
 
-Stage 3 introduces the **construction of a dependency graph** using **BFS**, with support for:
+Stage 4 adds:
+- Topological sorting of the dependency graph  
+- Comparison with the real Cargo loading order  
+- Display of differences  
 
-- Maximum depth limit  
-- Substring-based dependency filtering  
-- Cycle handling (via visited set)  
-- Test mode using a simple text file describing the graph  
-- Graph output as `source -> target` edges  
+## New Features
 
-The program still reads the configuration file from Stage 1 and uses the dependency extraction from Stage 2 when running in real mode.
+###  Topological Sort
+A classical algorithm that ensures every dependency appears before the package that depends on it.
+
+###  Comparison With Cargo
+The program produces:
+- Our calculated topological order
+- Cargo's load order (simplified in this stage)
+- A difference report
+
+###  Test Mode
+Works with the same `test_graph.txt` as Stage 3.
 
 ---
 
-## 📌 Stage 3 Features
+##  Project Structure (Stage 4)
 
-### ✔ BFS graph construction  
-The graph is built from a root package, exploring dependencies level by level.
-
-### ✔ Depth limit  
-The BFS stops exploring deeper dependencies once the configured `max_depth` is reached.
-
-### ✔ Filtering  
-Dependencies whose names contain the substring defined in `filter_substring` are ignored.
-
-### ✔ Cycle prevention  
-A visited set is used to avoid infinite loops when the dependency graph contains cycles.
-
-### ✔ Test graph mode  
-When `"use_test_repo": true`, the program expects a file where each line describes dependencies:
-
+dependency_visualizer_stage4/
+├── README.md
+├── .gitignore
+├── config.example.json
+├── test_graph.txt
+└── src/
+├── main.py
+├── cargo_parser.py
+├── graph_builder.py
+└── topo_sort.py
