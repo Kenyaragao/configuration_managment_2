@@ -1,21 +1,33 @@
-# Dependency Visualizer (Variant 27) — Stage 2
+# Dependency Visualizer (Variant 27) — Stage 3
 
-This is Stage 2 of the project.  
-In this stage, the program is able to:
+This directory contains the implementation of **Stage 3** of the project.
 
-- Load a JSON configuration file
-- Read direct dependencies of a Rust (Cargo) package
-- Parse direct dependencies either from:
-  - a real Git repository (cloned locally), or
-  - a test file (when use_test_repo = true)
+Stage 3 introduces the **construction of a dependency graph** using **BFS**, with support for:
 
-## Files
+- Maximum depth limit  
+- Substring-based dependency filtering  
+- Cycle handling (via visited set)  
+- Test mode using a simple text file describing the graph  
+- Graph output as `source -> target` edges  
 
-- `src/main.py` — main CLI integrating Stage 2
-- `src/cargo_parser.py` — module that extracts dependencies
-- `config.example.json` — example configuration
-- `test_deps.txt` — simple test dependency file
+The program still reads the configuration file from Stage 1 and uses the dependency extraction from Stage 2 when running in real mode.
 
-## How to test
+---
 
-### 1. Test mode (local file)
+## 📌 Stage 3 Features
+
+### ✔ BFS graph construction  
+The graph is built from a root package, exploring dependencies level by level.
+
+### ✔ Depth limit  
+The BFS stops exploring deeper dependencies once the configured `max_depth` is reached.
+
+### ✔ Filtering  
+Dependencies whose names contain the substring defined in `filter_substring` are ignored.
+
+### ✔ Cycle prevention  
+A visited set is used to avoid infinite loops when the dependency graph contains cycles.
+
+### ✔ Test graph mode  
+When `"use_test_repo": true`, the program expects a file where each line describes dependencies:
+
