@@ -1,31 +1,25 @@
-# Dependency Visualizer (Variant 27) — Stage 4
+# Dependency Visualizer (Variant 27) — Stage 5
 
-This directory contains the implementation of **Stage 4**.
+This directory contains the implementation of **Stage 5**, the final stage.
 
-Stage 4 adds:
-- Topological sorting of the dependency graph  
-- Comparison with the real Cargo loading order  
-- Display of differences  
-
-## New Features
-
-###  Topological Sort
-A classical algorithm that ensures every dependency appears before the package that depends on it.
-
-###  Comparison With Cargo
-The program produces:
-- Our calculated topological order
-- Cargo's load order (simplified in this stage)
-- A difference report
-
-###  Test Mode
-Works with the same `test_graph.txt` as Stage 3.
+Stage 5 adds:
+- Export of the dependency graph to D2 format  
+- Ability to generate diagrams using D2  
+- Final integration of all previous stages  
 
 ---
 
-##  Project Structure (Stage 4)
+## New Features
 
-dependency_visualizer_stage4/
+### ✔ D2 Export
+The program now produces a `.d2` file from the dependency graph.
+
+Example output:
+A: B
+A: C
+B: D
+C: D
+C: E
 ├── README.md
 ├── .gitignore
 ├── config.example.json
@@ -34,4 +28,12 @@ dependency_visualizer_stage4/
 ├── main.py
 ├── cargo_parser.py
 ├── graph_builder.py
-└── topo_sort.py
+├── topo_sort.py
+└── d2_exporter.py
+
+Produces:
+
+- BFS graph  
+- Topological order  
+- Cargo comparison  
+- D2 diagram file (`deps.d2`, for example)

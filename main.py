@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """
-Dependency Visualizer - Stage 4 (Variant 27)
+Dependency Visualizer - Stage 5 (Variant 27)
+
+Stages included:
+1. JSON configuration loading
+2. Direct dependency extraction (Cargo)
+3. BFS dependency graph builder
+4. Topological sorting + comparison
+5. D2 export
 """
 
 import argparse
@@ -11,6 +18,7 @@ from pathlib import Path
 from cargo_parser import load_dependencies
 from graph_builder import build_bfs_graph, load_test_graph
 from topo_sort import topological_sort, compare_with_cargo
+from d2_exporter import export_to_d2
 
 
 REQUIRED_FIELDS = [
@@ -24,6 +32,10 @@ REQUIRED_FIELDS = [
 ]
 
 
+# -------------------------
+# CONFIG HANDLING
+# -------------------------
+
 def load_config(path: Path):
     return json.load(path.open("r", encoding="utf-8"))
 
@@ -34,6 +46,10 @@ def validate_config(cfg: dict):
         raise KeyError("Missing required fields: {}".format(", ".join(missing)))
 
 
+# -------------------------
+# PRINT HELPERS
+# -------------------------
+
 def print_graph(edges):
     print("\n=== Dependency Graph (BFS) ===")
     if not edges:
@@ -42,7 +58,7 @@ def print_graph(edges):
         print(f"{src} -> {tgt}")
 
 
-def print_topo(order, ok):
+def print_topological(order, ok):
     print("\n=== Topological Order ===")
     for node in order:
         print(node)
@@ -59,10 +75,21 @@ def print_diff(diff):
         print(f"Our: {ours}   |   Cargo: {cargo}")
 
 
+def print_d2_message(path):
+    print("\n=== D2 Export ===")
+    print(f"D2 file saved to: {path}")
+    print("To render an image, run:")
+    print(f"  d2 {path} output.svg")
+
+
+# -------------------------
+# DEPENDENCY LOADER (REAL MODE)
+# -------------------------
+
 def dependency_loader_factory(repo_url):
     """
     Loads direct dependencies using Stage 2 logic.
-    Only works for the root package in Stage 4.
+    Used only for the root package.
     """
     def loader(package_name):
         if package_name == "ROOT":
@@ -72,8 +99,12 @@ def dependency_loader_factory(repo_url):
     return loader
 
 
+# -------------------------
+# MAIN PROGRAM
+# -------------------------
+
 def main():
-    parser = argparse.ArgumentParser(description="Dependency Visualizer - Stage 4")
+    parser = argparse.ArgumentParser(description="Dependency Visualizer - Stage 5")
     parser.add_argument("--config", "-c", required=True)
     parser.add_argument("--test-graph", help="Path to A: B C style graph file (test mode)")
     args = parser.parse_args()
@@ -85,9 +116,9 @@ def main():
     max_depth = cfg["max_depth"]
     filter_substr = cfg["filter_substring"]
 
-    # =============================
+    # =====================================
     # TEST MODE
-    # =============================
+    # =====================================
     if cfg["use_test_repo"]:
         if not args.test_graph:
             print("ERROR: Test mode enabled but no --test-graph given.", file=sys.stderr)
@@ -105,19 +136,25 @@ def main():
 
         print_graph(edges)
 
-        # Topo sort
+        # Stage 4: Topological sort
         order, ok = topological_sort(edges)
-        print_topo(order, ok)
+        print_topological(order, ok)
 
-        # Cargo order = same as topo order in simplified version
-        diff = compare_with_cargo(order, order)
+        # Stage 4: Comparison
+        diff = compare_with_cargo(order, order)  # same order for stage 4
         print_diff(diff)
+
+        # Stage 5: D2 Export
+        d2_path = cfg["output_image_name"].replace(".svg", ".d2")
+        saved = export_to_d2(edges, d2_path)
+        print_d2_message(saved)
 
         return
 
-    # =============================
-    # REAL MODE
-    # =============================
+    # =====================================
+    # REAL MODE (CLONE + PARSE)
+    # =====================================
+
     loader = dependency_loader_factory(cfg["repository_url"])
 
     edges = build_bfs_graph(
@@ -129,13 +166,18 @@ def main():
 
     print_graph(edges)
 
-    # Topo sort
+    # Stage 4: Topological sort
     order, ok = topological_sort(edges)
-    print_topo(order, ok)
+    print_topological(order, ok)
 
-    # Placeholder Cargo order
+    # Stage 4: Comparison (placeholder)
     diff = compare_with_cargo(order, order)
     print_diff(diff)
+
+    # Stage 5: Export to D2
+    d2_path = cfg["output_image_name"].replace(".svg", ".d2")
+    saved = export_to_d2(edges, d2_path)
+    print_d2_message(saved)
 
 
 if __name__ == "__main__":
