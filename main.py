@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-Dependency Visualizer - Stage 1 (Variant 27)
-
-Simple CLI that reads JSON configuration and prints key = value pairs,
-with validation and error handling.
-
-All messages, variable names, and comments are in English as requested.
+Dependency Visualizer - Stage 2 (Variant 27)
 """
 
 import argparse
 import json
 import sys
 from pathlib import Path
+from cargo_parser import load_dependencies
 
 REQUIRED_FIELDS = [
     "package_name",
@@ -25,50 +21,35 @@ REQUIRED_FIELDS = [
 
 def load_config(path: Path):
     if not path.exists():
-        raise FileNotFoundError("Configuration file not found: {}".format(path))
-    try:
-        with path.open("r", encoding="utf-8") as f:
-            data = json.load(f)
-    except json.JSONDecodeError as e:
-        raise ValueError("Invalid JSON in configuration file: {}".format(e))
-    return data
+        raise FileNotFoundError("Configuration file not found.")
+    return json.load(path.open("r", encoding="utf-8"))
 
 def validate_config(cfg: dict):
     missing = [k for k in REQUIRED_FIELDS if k not in cfg]
     if missing:
-        raise KeyError("Missing required configuration fields: {}".format(", ".join(missing)))
-    
-    if not isinstance(cfg.get("use_test_repo"), bool):
-        raise TypeError("'use_test_repo' must be a boolean")
+        raise KeyError("Missing required fields: {}".format(", ".join(missing)))
 
-    if not isinstance(cfg.get("max_depth"), int):
-        raise TypeError("'max_depth' must be an integer")
-
-    return True
-
-def print_config(cfg: dict):
-    for k, v in cfg.items():
-        print("{} = {}".format(k, v))
+def print_dependencies(dep_list):
+    print("\n=== Direct Dependencies ===")
+    for name, version in dep_list:
+        print("{} = {}".format(name, version))
 
 def main():
-    parser = argparse.ArgumentParser(description="Dependency Visualizer - Stage 1")
-    parser.add_argument("--config", "-c", required=True, help="Path to JSON configuration file")
+    parser = argparse.ArgumentParser(description="Dependency Visualizer - Stage 2")
+    parser.add_argument("--config", "-c", required=True)
+    parser.add_argument("--test-file")
     args = parser.parse_args()
 
-    cfg_path = Path(args.config)
-    try:
-        cfg = load_config(cfg_path)
-    except Exception as e:
-        print("ERROR: {}".format(e), file=sys.stderr)
-        sys.exit(2)
+    cfg = load_config(Path(args.config))
+    validate_config(cfg)
 
-    try:
-        validate_config(cfg)
-    except Exception as e:
-        print("CONFIG ERROR: {}".format(e), file=sys.stderr)
-        sys.exit(3)
+    deps = load_dependencies(
+        repository_url=cfg["repository_url"],
+        use_test_repo=cfg["use_test_repo"],
+        test_file=args.test_file
+    )
 
-    print_config(cfg)
+    print_dependencies(deps)
 
 if __name__ == "__main__":
     main()
